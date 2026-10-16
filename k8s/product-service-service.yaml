@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: lab3
+spec:
+  selector:
+    app: product-service
+  ports:
+  - name: http
+    port: 8083
+    targetPort: http
+  type: ClusterIP

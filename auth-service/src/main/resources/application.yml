@@ -1,0 +1,18 @@
+server.port: ${PORT:8081}
+spring.application.name: auth-service
+app.jwt-secret: ${JWT_SECRET}
+app.internal-key: ${INTERNAL_KEY}
+management.endpoints.web.exposure.include: health,info
+logging.level.root: ${LOG_LEVEL:INFO}
+logging.pattern.console: '%d{yyyy-MM-dd HH:mm:ss.SSS} service=auth-service level=%-5level requestId=%X{requestId} %logger{36} - %msg%n'
+spring.datasource.url: ${DB_URL:jdbc:h2:file:./auth;DB_CLOSE_ON_EXIT=FALSE}
+spring.datasource.driver-class-name: org.h2.Driver
+spring.datasource.username: sa
+spring.sql.init.mode: always
+services.user-url: ${USER_URL:http://localhost:8082}
+services.product-url: ${PRODUCT_URL:http://localhost:8083}
+services.order-url: ${ORDER_URL:http://localhost:8084}
+services.payment-url: ${PAYMENT_URL:http://localhost:8085}
+services.notification-url: ${NOTIFICATION_URL:http://localhost:8086}
+app.admin-email: ${ADMIN_EMAIL:admin@example.com}
+app.admin-password: ${ADMIN_PASSWORD}

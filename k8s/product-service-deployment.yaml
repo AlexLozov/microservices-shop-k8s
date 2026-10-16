@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: lab3
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+      - name: product-service
+        image: lab3/product-service:local
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8083
+          name: http
+        env:
+        - name: PORT
+          value: "8083"
+        - name: DB_URL
+          value: "jdbc:h2:file:/data/product;DB_CLOSE_ON_EXIT=FALSE"
+        - name: AUTH_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: AUTH_URL
+        - name: USER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: USER_URL
+        - name: ORDER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: ORDER_URL
+        - name: PAYMENT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: PAYMENT_URL
+        - name: NOTIFICATION_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: NOTIFICATION_URL
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: LOG_LEVEL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: store-secrets
+              key: JWT_SECRET
+        - name: INTERNAL_KEY
+          valueFrom:
+            secretKeyRef:
+              name: store-secrets
+              key: INTERNAL_KEY
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 192Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: product-service-data

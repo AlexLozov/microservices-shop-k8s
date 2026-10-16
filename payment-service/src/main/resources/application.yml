@@ -1,0 +1,20 @@
+server.port: ${PORT:8085}
+spring.application.name: payment-service
+app.jwt-secret: ${JWT_SECRET}
+app.internal-key: ${INTERNAL_KEY}
+management.endpoints.web.exposure.include: health,info
+logging.level.root: ${LOG_LEVEL:INFO}
+logging.pattern.console: '%d{yyyy-MM-dd HH:mm:ss.SSS} service=payment-service level=%-5level requestId=%X{requestId} %logger{36} - %msg%n'
+spring.datasource.url: ${DB_URL:jdbc:h2:file:./payment;DB_CLOSE_ON_EXIT=FALSE}
+spring.datasource.driver-class-name: org.h2.Driver
+spring.datasource.username: sa
+spring.sql.init.mode: always
+spring.rabbitmq.host: ${RABBIT_HOST:localhost}
+spring.rabbitmq.port: ${RABBIT_PORT:5672}
+spring.rabbitmq.username: ${RABBIT_USER}
+spring.rabbitmq.password: ${RABBIT_PASSWORD}
+services.auth-url: ${AUTH_URL:http://localhost:8081}
+services.user-url: ${USER_URL:http://localhost:8082}
+services.product-url: ${PRODUCT_URL:http://localhost:8083}
+services.order-url: ${ORDER_URL:http://localhost:8084}
+services.notification-url: ${NOTIFICATION_URL:http://localhost:8086}

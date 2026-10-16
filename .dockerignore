@@ -1,0 +1,13 @@
+**/target
+**/.git
+**/.idea
+**/.vscode
+**/data
+**/*.mv.db
+**/*.trace.db
+.env
+.env.*
+README.md
+k8s
+scripts
+tests

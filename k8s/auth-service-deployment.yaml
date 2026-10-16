@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: lab3
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+      - name: auth-service
+        image: lab3/auth-service:local
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        - name: PORT
+          value: "8081"
+        - name: DB_URL
+          value: "jdbc:h2:file:/data/auth;DB_CLOSE_ON_EXIT=FALSE"
+        - name: USER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: USER_URL
+        - name: PRODUCT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: PRODUCT_URL
+        - name: ORDER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: ORDER_URL
+        - name: PAYMENT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: PAYMENT_URL
+        - name: NOTIFICATION_URL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: NOTIFICATION_URL
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: store-config
+              key: LOG_LEVEL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: store-secrets
+              key: JWT_SECRET
+        - name: INTERNAL_KEY
+          valueFrom:
+            secretKeyRef:
+              name: store-secrets
+              key: INTERNAL_KEY
+        - name: ADMIN_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: store-secrets
+              key: ADMIN_EMAIL
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: store-secrets
+              key: ADMIN_PASSWORD
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 192Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: auth-service-data

@@ -1,0 +1,117 @@
+name: lab3-store
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:?Set RABBIT_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:?Set RABBIT_PASSWORD in .env}
+    ports: ["127.0.0.1:25672:5672", "127.0.0.1:25673:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      retries: 15
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    environment:
+      PORT: 8081
+      DB_URL: jdbc:h2:file:/data/auth;DB_CLOSE_ON_EXIT=FALSE
+      USER_URL: http://user-service:8082
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+    volumes: [auth-data:/data]
+    ports: ["127.0.0.1:28081:8081"]
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    environment:
+      PORT: 8082
+      DB_URL: jdbc:h2:file:/data/user;DB_CLOSE_ON_EXIT=FALSE
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+    volumes: [user-data:/data]
+    ports: ["127.0.0.1:28082:8082"]
+  product-service:
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
+    environment:
+      PORT: 8083
+      DB_URL: jdbc:h2:file:/data/product;DB_CLOSE_ON_EXIT=FALSE
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+    volumes: [product-data:/data]
+    ports: ["127.0.0.1:28083:8083"]
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    environment:
+      PORT: 8084
+      DB_URL: jdbc:h2:file:/data/order;DB_CLOSE_ON_EXIT=FALSE
+      PRODUCT_URL: http://product-service:8083
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+    volumes: [order-data:/data]
+    ports: ["127.0.0.1:28084:8084"]
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+    environment:
+      PORT: 8085
+      DB_URL: jdbc:h2:file:/data/payment;DB_CLOSE_ON_EXIT=FALSE
+      ORDER_URL: http://order-service:8084
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER:?Set RABBIT_USER in .env}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:?Set RABBIT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+    volumes: [payment-data:/data]
+    ports: ["127.0.0.1:28085:8085"]
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+    environment:
+      PORT: 8086
+      DB_URL: jdbc:h2:file:/data/notification;DB_CLOSE_ON_EXIT=FALSE
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER:?Set RABBIT_USER in .env}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:?Set RABBIT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+    volumes: [notification-data:/data]
+    ports: ["127.0.0.1:28086:8086"]
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    environment:
+      PORT: 8080
+      AUTH_URL: http://auth-service:8081
+      USER_URL: http://user-service:8082
+      PRODUCT_URL: http://product-service:8083
+      ORDER_URL: http://order-service:8084
+      PAYMENT_URL: http://payment-service:8085
+      NOTIFICATION_URL: http://notification-service:8086
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INTERNAL_KEY: ${INTERNAL_KEY:?Set INTERNAL_KEY in .env}
+    ports: ["127.0.0.1:28080:8080"]
+volumes:
+  auth-data:
+  user-data:
+  product-data:
+  order-data:
+  payment-data:
+  notification-data:
+
+
